@@ -13,8 +13,11 @@ mcp = FastMCP("slacc")
 
 def _load_creds() -> dict:
     if not CREDS_FILE.exists():
-        from main import main as extract
-        extract()
+        import subprocess, sys
+        subprocess.run(
+            [sys.executable, str(Path(__file__).parent / "main.py")],
+            check=True,
+        )
     if not CREDS_FILE.exists():
         raise RuntimeError("Token extraction failed. Run manually: uv run main.py")
     return json.loads(CREDS_FILE.read_text())

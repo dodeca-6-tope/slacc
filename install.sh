@@ -35,10 +35,15 @@ fi
 # Install deps
 uv sync --project "${INSTALL_DIR}" --quiet
 
+# Extract credentials
+if [[ ! -f "${INSTALL_DIR}/credentials.json" ]]; then
+  echo "Extracting Slack credentials..."
+  uv run --project "${INSTALL_DIR}" python "${INSTALL_DIR}/main.py"
+fi
+
 # Register MCP server globally (remove first if exists)
 claude mcp remove slacc -s user 2>/dev/null || true
 claude mcp add --scope user slacc -- uv run --project "${INSTALL_DIR}" python "${INSTALL_DIR}/server.py"
 
 echo ""
-echo "slacc installed! Restart Claude Code and use the slack_api tool."
-echo "Credentials will be extracted automatically on first use."
+echo "slacc installed! Restart Claude Code to start using it."
