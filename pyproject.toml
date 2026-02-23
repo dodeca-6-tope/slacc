@@ -1,0 +1,8 @@
+[project]
+name = "slack-token-extractor"
+version = "0.1.0"
+description = "Extract Slack session credentials from the macOS desktop app"
+requires-python = ">=3.12"
+dependencies = [
+    "websockets>=16.0",
+]
