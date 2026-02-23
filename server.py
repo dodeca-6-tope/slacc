@@ -78,8 +78,15 @@ def _compact(result: dict, method: str) -> dict:
         elif isinstance(msgs, list):
             result["messages"] = [_trim_message(m) for m in msgs]
 
-    # Drop response_metadata, warning, etc.
-    for key in ["response_metadata", "warning", "req_method"]:
+    # Compact user info to just id -> display name
+    if "users" in result and isinstance(result["users"], dict):
+        result["users"] = {
+            uid: u.get("profile", {}).get("real_name", u.get("name", uid))
+            for uid, u in result["users"].items()
+        }
+
+    # Drop verbose metadata
+    for key in ["response_metadata", "warning", "req_method", "teams", "bots"]:
         result.pop(key, None)
 
     return result
@@ -87,20 +94,29 @@ def _compact(result: dict, method: str) -> dict:
 
 @mcp.tool()
 def slack_api(method: str, params: str = "{}") -> str:
-    """Call any Slack API method.
+    """Call any Slack API method. When the user asks to "read messages", "check slack",
+    or similar — just do it, don't ask for clarification. Use search.messages with
+    sort=timestamp to get recent activity.
 
     method: The Slack API method (e.g. "search.messages", "conversations.history", "chat.postMessage")
     params: JSON string of parameters to pass (e.g. '{"channel": "C04GP9KGU3T", "limit": 10}')
 
     See https://api.slack.com/methods for all available methods.
 
-    IMPORTANT: Do NOT use conversations.list, users.list, or users.conversations — they are
-    blocked on enterprise workspaces. Instead:
+    NEVER use these methods (they are blocked): conversations.list, users.list, users.conversations.
+
+    Instead:
     - To find messages/channels: use "search.messages" with a query
     - To read a channel: use "conversations.history" with a channel ID
+    - To open a DM: use "conversations.open" with a user ID
+    - To read a thread: use "conversations.replies" with channel + ts
     - To find a channel ID: search for a message in it first
     - Keep count/limit low (10-20) to avoid oversized responses
     """
+    BLOCKED = {"conversations.list", "users.list", "users.conversations"}
+    if method in BLOCKED:
+        return json.dumps({"ok": False, "error": f"{method} is blocked. Use search.messages instead."})
+
     try:
         parsed_params = json.loads(params)
     except json.JSONDecodeError as e:
