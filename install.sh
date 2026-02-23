@@ -35,7 +35,8 @@ fi
 # Install deps
 uv sync --project "${INSTALL_DIR}" --quiet
 
-# Register MCP server globally
+# Register MCP server globally (remove first if exists)
+claude mcp remove slacc -s user 2>/dev/null || true
 claude mcp add --scope user slacc -- uv run --project "${INSTALL_DIR}" python "${INSTALL_DIR}/server.py"
 
 echo ""
