@@ -1,4 +1,4 @@
-# Slacc
+# slacc
 
 Slack access for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Extracts credentials from the macOS Slack desktop app and exposes a Slack API tool via MCP.
 
